@@ -1,0 +1,15 @@
+*.pdf
+*.aux
+*.backup
+*.log
+*.bbl
+*.out
+*.blg
+*.pyc
+*~
+*.swp
+*.pcap
+*.xpl
+*.patch
+__pycache__
+dist
