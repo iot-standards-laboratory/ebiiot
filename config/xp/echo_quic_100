@@ -1,7 +1,0 @@
-xpType:performance-analysis
-serverPcap:yes
-kpms:fullmesh
-kpmc:fullmesh
-clients:20
-exp:quic
-rmem:300000 300000 300000

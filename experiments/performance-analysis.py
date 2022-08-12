@@ -5,11 +5,15 @@ import threading
 
 class PerformanceAnalysisExp(RandomFileExperiment):
     # APPNAME = "qcoap-uni"
-    EXP = "ntcp"
+    PROTO = "tcp"
+    CLIENTS = "10"
+    MESSAGES = "10"
+    MSGSIZE = "100"
+
     EXPTYPE = "performance-analysis"
     NAME = "performance-analysis"
-    SERVER_LOG = "server.txt"
-    CLIENT_LOG = "client.txt"
+    SERVER_LOG = "server-log.txt"
+    CLIENT_LOG = "client-log.txt"
     PING_OUTPUT = "ping.log"
 
     def __init__(self, experiment_parameter_filename, topo, topo_config):
@@ -17,9 +21,11 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         super(PerformanceAnalysisExp, self).__init__(
             experiment_parameter_filename, topo, topo_config)
 
+        self.PROTO = self.experiment_parameter.get("proto")
         self.CLIENTS = self.experiment_parameter.get("clients")
-        self.EXP = self.experiment_parameter.get("exp")
-        print("EXP: ", self.EXP)
+        self.MESSAGES = self.experiment_parameter.get("messages")
+        self.MSGSIZE = self.experiment_parameter.get("msgsize")
+        print("PROTO: ", self.PROTO)
 
     def load_parameters(self):
         # Just rely on RandomFileExperiment
@@ -33,9 +39,9 @@ class PerformanceAnalysisExp(RandomFileExperiment):
                              PerformanceAnalysisExp.SERVER_LOG)
 
     def getServerCmd(self):
-        s = "{}/../utils/testserver >> server-log.txt &".format(
+        s = "{}/../utils/pa -server -proto {} >> server-log.txt &".format(
             os.path.dirname(os.path.abspath(__file__)),
-            self.EXP
+            self.PROTO,
         )
         # s = "/home/mininet/pugit/sample/minitopo/utils/server & > {}".format(
         #     BASICQUIC.SERVER_LOG)
@@ -44,8 +50,12 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         return s
 
     def getClientCmd(self):
-        s = "{}/../utils/testclient {}:19099 >> client-log.txt".format(
+        s = "{}/../utils/pa -proto {} -clients {} -messages {} -size {} {}:8080 >> client-log.txt".format(
             os.path.dirname(os.path.abspath(__file__)),
+            self.PROTO,
+            self.CLIENTS,
+            self.MESSAGES,
+            self.MSGSIZE,
             self.topo_config.get_server_ip(0),
         )
         print(s)
@@ -87,4 +97,4 @@ class PerformanceAnalysisExp(RandomFileExperiment):
                              "netstat -sn > netstat_router_after")
         self.topo.command_to(self.topo_config.clients[0], "sleep 2")
         self.topo.command_to(self.topo_config.servers[0],
-                             "pkill -f testserver")
+                             "pkill -f pa")

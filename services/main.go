@@ -2,26 +2,31 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	mock "services/mock"
-	"services/mock/echotcp"
+	"services/mock/simplequic"
+	"services/mock/simpletcp"
 	"services/timestamp"
+	"strings"
 	"syscall"
 )
 
 func main() {
+	exp := flag.String("exp", "simple", "type of experimentation")
 	isServer := flag.Bool("server", false, "Is server?")
-	exp := flag.String("exp", "quic", "type of experimentation")
+	proto := flag.String("proto", "quic", "transport protocol")
 	numClients := flag.Int("clients", 10, "number of clients")
 	numMessages := flag.Int("messages", 10, "number of messages")
 	sizeMessage := flag.Int("size", 100, "size of messages")
 	_ = *numClients
+	_ = *exp
 	flag.Parse()
 
 	if *isServer {
-		runServer(*exp)
+		runServer(*proto)
 		return
 	}
 
@@ -31,14 +36,18 @@ func main() {
 	}
 
 	var clients mock.Entity
-	clients = echotcp.NewClients(spAdr, *numClients, *numMessages, *sizeMessage)
+	if strings.Compare(*proto, "tcp") == 0 {
+		clients = simpletcp.NewClients(spAdr, *numClients, *numMessages, *sizeMessage)
+	} else if strings.Compare(*proto, "quic") == 0 {
+		clients = simplequic.NewClients(spAdr, *numClients, *numMessages, *sizeMessage)
+	}
 
 	clients.Run()
 
-	log.Println("done!!")
+	fmt.Println("done!!")
 }
 
-func runServer(exp string) {
+func runServer(proto string) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGTERM, os.Interrupt)
 	go func() {
@@ -48,7 +57,11 @@ func runServer(exp string) {
 	}()
 
 	var s mock.Entity
-	s = echotcp.NewServer()
+	if strings.Compare(proto, "tcp") == 0 {
+		s = simpletcp.NewServer()
+	} else if strings.Compare(proto, "quic") == 0 {
+		s = simplequic.NewServer()
+	}
 
 	log.Fatalln(s.Run())
 	// run server

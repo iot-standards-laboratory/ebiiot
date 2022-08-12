@@ -1,6 +1,6 @@
 clients:2
 leftSubnet:10.0.
 rightSubnet:10.1.
-path_c2r_0:10,30,6,0
+path_c2r_0:60,30,2,0
 path_c2r_1:200,30,6,0
 topoType:MultiInterfaceMultiClients
