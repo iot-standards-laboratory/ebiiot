@@ -1,6 +1,7 @@
 package simpletcp
 
 import (
+	"fmt"
 	"net"
 	"services/mock"
 	"services/timestamp"
@@ -13,6 +14,7 @@ func NewServer() mock.Entity {
 }
 
 func (s *Server) Run() error {
+	fmt.Println("tcp run server")
 	listener, err := net.Listen(
 		"tcp",
 		":8080",

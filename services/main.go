@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"hash/crc32"
 	"log"
 	"os"
 	"os/signal"
@@ -10,9 +11,26 @@ import (
 	"services/mock/simplequic"
 	"services/mock/simpletcp"
 	"services/timestamp"
-	"strings"
 	"syscall"
 )
+
+func getHashValue(b string) uint32 {
+	return crc32.Checksum([]byte(b), crc32.MakeTable(crc32.IEEE))
+}
+
+var clientGenerators = map[uint32]map[uint32]func(string, int, int, int) mock.Entity{}
+var serverGenerators = map[uint32]map[uint32]func() mock.Entity{}
+
+func init() {
+	clientSimpleGenerators := map[uint32]func(string, int, int, int) mock.Entity{}
+	serverSimpleGenerators := map[uint32]func() mock.Entity{}
+	clientSimpleGenerators[getHashValue("tcp")] = simpletcp.NewClients
+	serverSimpleGenerators[getHashValue("tcp")] = simpletcp.NewServer
+	clientSimpleGenerators[getHashValue("quic")] = simplequic.NewClients
+	serverSimpleGenerators[getHashValue("quic")] = simplequic.NewServer
+	clientGenerators[getHashValue("simple")] = clientSimpleGenerators
+	serverGenerators[getHashValue("simple")] = serverSimpleGenerators
+}
 
 func main() {
 	exp := flag.String("exp", "simple", "type of experimentation")
@@ -26,7 +44,7 @@ func main() {
 	flag.Parse()
 
 	if *isServer {
-		runServer(*proto)
+		runServer(*exp, *proto)
 		return
 	}
 
@@ -35,19 +53,13 @@ func main() {
 		log.Fatalln("invalid server address")
 	}
 
-	var clients mock.Entity
-	if strings.Compare(*proto, "tcp") == 0 {
-		clients = simpletcp.NewClients(spAdr, *numClients, *numMessages, *sizeMessage)
-	} else if strings.Compare(*proto, "quic") == 0 {
-		clients = simplequic.NewClients(spAdr, *numClients, *numMessages, *sizeMessage)
-	}
-
+	var clients = clientGenerators[getHashValue(*exp)][getHashValue(*proto)](spAdr, *numClients, *numMessages, *sizeMessage)
 	clients.Run()
 
 	fmt.Println("done!!")
 }
 
-func runServer(proto string) {
+func runServer(exp, proto string) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGTERM, os.Interrupt)
 	go func() {
@@ -56,12 +68,7 @@ func runServer(proto string) {
 		os.Exit(0)
 	}()
 
-	var s mock.Entity
-	if strings.Compare(proto, "tcp") == 0 {
-		s = simpletcp.NewServer()
-	} else if strings.Compare(proto, "quic") == 0 {
-		s = simplequic.NewServer()
-	}
+	s := serverGenerators[getHashValue(exp)][getHashValue(proto)]()
 
 	log.Fatalln(s.Run())
 	// run server
