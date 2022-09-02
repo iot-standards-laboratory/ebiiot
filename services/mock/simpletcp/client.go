@@ -29,12 +29,12 @@ func (c *Clients) Run() error {
 	fmt.Println("start tcp client")
 	var wg sync.WaitGroup
 	wg.Add(c.numClients)
-
 	for i := 0; i < c.numClients; i++ {
 		go func(id, size int) {
 			defer wg.Done()
 			conn, err := net.Dial("tcp", c.spAdr)
 			if err != nil {
+				fmt.Println(err)
 				return
 			}
 			defer conn.Close()

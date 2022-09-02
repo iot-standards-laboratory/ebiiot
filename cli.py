@@ -5,7 +5,7 @@ import template
 
 # exp parameter
 exp = 'simple'
-proto = 'quic'
+proto = 'tcp'
 clients = '60'
 messages = '100'
 msgsize = '1000'

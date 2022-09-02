@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	mock "services/mock"
+	"services/mock/simplehybrid"
 	"services/mock/simplequic"
 	"services/mock/simpletcp"
 	"services/timestamp"
@@ -28,6 +29,8 @@ func init() {
 	serverSimpleGenerators[getHashValue("tcp")] = simpletcp.NewServer
 	clientSimpleGenerators[getHashValue("quic")] = simplequic.NewClients
 	serverSimpleGenerators[getHashValue("quic")] = simplequic.NewServer
+	clientSimpleGenerators[getHashValue("hybrid")] = simplehybrid.NewClients
+	serverSimpleGenerators[getHashValue("hybrid")] = simplehybrid.NewServer
 	clientGenerators[getHashValue("simple")] = clientSimpleGenerators
 	serverGenerators[getHashValue("simple")] = serverSimpleGenerators
 }
@@ -63,13 +66,13 @@ func runServer(exp, proto string) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGTERM, os.Interrupt)
 	go func() {
-		<-interrupt
+		log.Println(<-interrupt)
 		timestamp.Result()
 		os.Exit(0)
 	}()
 
 	s := serverGenerators[getHashValue(exp)][getHashValue(proto)]()
 
-	log.Fatalln(s.Run())
 	// run server
+	log.Fatalln("server run:", s.Run())
 }

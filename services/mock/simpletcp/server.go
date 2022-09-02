@@ -38,7 +38,7 @@ func (s *Server) Run() error {
 				}
 
 				msg := mock.ParseMsg(payload)
-				timestamp.Cummulate(msg.Latency())
+				timestamp.Cummulate(msg.Latency(), timestamp.TCP)
 			}
 		}()
 	}
