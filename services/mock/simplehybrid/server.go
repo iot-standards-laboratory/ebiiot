@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"log"
 	"math/big"
 	"net"
 	"services/mock"
@@ -29,7 +28,14 @@ func (s *Server) Run() error {
 
 	// ctx, _ := context.WithCancel(context.Background())
 	ctx := context.Background()
-	err := listenTCP(ctx)
+	go func() {
+		err := listenTCP(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
+	err := listenQUIC(ctx)
 	if err != nil {
 		return err
 	}
@@ -76,7 +82,6 @@ func listenTCP(ctx context.Context) error {
 	case <-ctx.Done():
 		return nil
 	case <-terminated:
-		log.Println("tt: terminated")
 		return nil
 	}
 }
@@ -87,6 +92,7 @@ func listenQUIC(ctx context.Context) error {
 		generateTLSConfig(),
 		nil,
 	)
+
 	if err != nil {
 		return err
 	}
@@ -122,7 +128,6 @@ func listenQUIC(ctx context.Context) error {
 	// case <-terminated:
 	// 	return nil
 	// }
-
 }
 
 func generateTLSConfig() *tls.Config {

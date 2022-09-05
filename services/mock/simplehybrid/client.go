@@ -1,26 +1,42 @@
 package simplehybrid
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
+	"os"
 	"services/mock"
 	"services/utils"
 	"sync"
 	"time"
+
+	"github.com/lucas-clemente/quic-go"
 )
 
+const tcpRate = 0.4
+
 type Clients struct {
-	spAdr       string
-	numClients  int
-	numMessages int
-	sizeMessage int
+	spAdr           string
+	numTCPClients   int
+	numQUICClients  int
+	numTCPMessages  int
+	numQUICMessages int
+	sizeMessage     int
 }
 
 func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Entity {
+	numTCPClients := int(float64(numClients) * tcpRate)
+	numQUICClients := numClients - numTCPClients
+	numTCPMessages := int(float64(numMessages) * tcpRate)
+	numQUICMessages := numMessages - numTCPMessages
+
 	return &Clients{
 		spAdr,
-		numClients,
-		numMessages,
+		numTCPClients,
+		numQUICClients,
+		numTCPMessages,
+		numQUICMessages,
 		sizeMessage,
 	}
 }
@@ -28,9 +44,9 @@ func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Ent
 func (c *Clients) Run() error {
 	fmt.Println("start hybrid client")
 	var wg sync.WaitGroup
-	wg.Add(c.numClients)
+	wg.Add(c.numTCPClients + c.numQUICClients)
 
-	for i := 0; i < c.numClients; i++ {
+	for i := 0; i < c.numTCPClients; i++ {
 		go func(id, size int) {
 			defer wg.Done()
 			conn, err := net.Dial("tcp", c.spAdr)
@@ -39,10 +55,37 @@ func (c *Clients) Run() error {
 			}
 			defer conn.Close()
 
-			for i := 0; i < c.numMessages; i++ {
+			for i := 0; i < c.numTCPMessages; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(conn, msg)
-				fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				fmt.Printf("tcp client[%d] - sent %d's message\n", id, i)
+				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
+			}
+		}(i, c.sizeMessage)
+	}
+
+	for i := 0; i < c.numQUICClients; i++ {
+		tlsConf, err := getTlsConf()
+		if err != nil {
+			return err
+		}
+		conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
+		if err != nil {
+			return err
+		}
+
+		go func(id, size int) {
+			defer wg.Done()
+			stream, err := conn.OpenStreamSync(context.Background())
+			if err != nil {
+				return
+			}
+			defer stream.Close()
+
+			for i := 0; i < c.numQUICMessages; i++ {
+				msg := mock.NewMessage(id, size)
+				mock.WritePayload(stream, msg)
+				fmt.Printf("quic client[%d] - sent %d's message\n", id, i)
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}
 		}(i, c.sizeMessage)
@@ -52,4 +95,19 @@ func (c *Clients) Run() error {
 	fmt.Println("the operation of clients is done!!")
 
 	return nil
+}
+
+func getTlsConf() (*tls.Config, error) {
+	keylog, err := os.Create("./ssl-key.log")
+	if err != nil {
+		return nil, err
+	}
+
+	tlsConf := &tls.Config{
+		InsecureSkipVerify: true,
+		KeyLogWriter:       keylog,
+		NextProtos:         []string{"quic-echo-example"},
+	}
+
+	return tlsConf, nil
 }

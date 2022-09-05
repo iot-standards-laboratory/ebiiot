@@ -3,7 +3,7 @@ import sys
 import time
 
 exp = 'simple'
-proto = 'tcp'
+proto = 'hybrid'
 clients = '10'
 messages = '100'
 msgsize = '1000'

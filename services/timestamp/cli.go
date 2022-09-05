@@ -40,15 +40,15 @@ func Result() {
 	}
 
 	if tcpCnt != 0 {
-		fmt.Fprint(f, tcpLatency/int64(tcpCnt))
+		fmt.Fprintf(f, "%d %d\n", tcpCnt, tcpLatency/int64(tcpCnt))
 	} else {
-		fmt.Fprint(f, "0")
+		fmt.Fprint(f, "0 0")
 	}
 	fmt.Fprint(f, " ")
 
 	if quicCnt != 0 {
-		fmt.Fprintln(f, quicLatency/int64(quicCnt))
+		fmt.Fprintf(f, "%d %d\n", quicCnt, quicLatency/int64(quicCnt))
 	} else {
-		fmt.Fprintln(f, "0")
+		fmt.Fprintln(f, "0 0")
 	}
 }
