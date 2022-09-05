@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"services/mock"
@@ -17,34 +18,32 @@ import (
 const tcpRate = 0.4
 
 type Clients struct {
-	spAdr           string
-	numTCPClients   int
-	numQUICClients  int
-	numTCPMessages  int
-	numQUICMessages int
-	sizeMessage     int
+	spAdr          string
+	numTCPClients  int
+	numQUICClients int
+	numMessages    int
+	sizeMessage    int
 }
 
 func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Entity {
 	numTCPClients := int(float64(numClients) * tcpRate)
 	numQUICClients := numClients - numTCPClients
-	numTCPMessages := int(float64(numMessages) * tcpRate)
-	numQUICMessages := numMessages - numTCPMessages
-
+	log.Println("numTCPClients:", numTCPClients)
+	log.Println("numQUICClients:", numQUICClients)
 	return &Clients{
 		spAdr,
 		numTCPClients,
 		numQUICClients,
-		numTCPMessages,
-		numQUICMessages,
+		numMessages,
 		sizeMessage,
 	}
 }
 
 func (c *Clients) Run() error {
 	fmt.Println("start hybrid client")
+
 	var wg sync.WaitGroup
-	wg.Add(c.numTCPClients + c.numQUICClients)
+	wg.Add(c.numQUICClients + c.numTCPClients)
 
 	for i := 0; i < c.numTCPClients; i++ {
 		go func(id, size int) {
@@ -55,7 +54,7 @@ func (c *Clients) Run() error {
 			}
 			defer conn.Close()
 
-			for i := 0; i < c.numTCPMessages; i++ {
+			for i := 0; i < c.numMessages; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(conn, msg)
 				fmt.Printf("tcp client[%d] - sent %d's message\n", id, i)
@@ -64,16 +63,15 @@ func (c *Clients) Run() error {
 		}(i, c.sizeMessage)
 	}
 
+	tlsConf, err := getTlsConf()
+	if err != nil {
+		return err
+	}
+	conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
+	if err != nil {
+		return err
+	}
 	for i := 0; i < c.numQUICClients; i++ {
-		tlsConf, err := getTlsConf()
-		if err != nil {
-			return err
-		}
-		conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
-		if err != nil {
-			return err
-		}
-
 		go func(id, size int) {
 			defer wg.Done()
 			stream, err := conn.OpenStreamSync(context.Background())
@@ -82,7 +80,7 @@ func (c *Clients) Run() error {
 			}
 			defer stream.Close()
 
-			for i := 0; i < c.numQUICMessages; i++ {
+			for i := 0; i < c.numMessages; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(stream, msg)
 				fmt.Printf("quic client[%d] - sent %d's message\n", id, i)
@@ -92,6 +90,7 @@ func (c *Clients) Run() error {
 	}
 
 	wg.Wait()
+
 	fmt.Println("the operation of clients is done!!")
 
 	return nil

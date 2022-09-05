@@ -42,9 +42,8 @@ func Result() {
 	if tcpCnt != 0 {
 		fmt.Fprintf(f, "%d %d\n", tcpCnt, tcpLatency/int64(tcpCnt))
 	} else {
-		fmt.Fprint(f, "0 0")
+		fmt.Fprintln(f, "0 0")
 	}
-	fmt.Fprint(f, " ")
 
 	if quicCnt != 0 {
 		fmt.Fprintf(f, "%d %d\n", quicCnt, quicLatency/int64(quicCnt))

@@ -12,7 +12,6 @@ import (
 	"net"
 	"services/mock"
 	"services/timestamp"
-	"sync"
 
 	"github.com/lucas-clemente/quic-go"
 )
@@ -52,37 +51,24 @@ func listenTCP(ctx context.Context) error {
 		return err
 	}
 
-	conn, err := listener.Accept()
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-	terminated := make(chan interface{})
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			payload, err := mock.ReadPayload(conn)
-			if err != nil {
-				terminated <- struct{}{}
-				return
-			}
-			msg := mock.ParseMsg(payload)
-			timestamp.Cummulate(msg.Latency(), timestamp.TCP)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			return err
 		}
-	}()
-
-	go func() {
-		wg.Wait()
-		terminated <- struct{}{}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return nil
-	case <-terminated:
-		return nil
+		defer conn.Close()
+		terminated := make(chan interface{})
+		go func() {
+			for {
+				payload, err := mock.ReadPayload(conn)
+				if err != nil {
+					terminated <- struct{}{}
+					return
+				}
+				msg := mock.ParseMsg(payload)
+				timestamp.Cummulate(msg.Latency(), timestamp.TCP)
+			}
+		}()
 	}
 }
 

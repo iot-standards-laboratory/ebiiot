@@ -49,16 +49,15 @@ func (c *Clients) Run() error {
 	var wg sync.WaitGroup
 	wg.Add(c.numClients)
 
+	tlsConf, err := getTlsConf()
+	if err != nil {
+		return err
+	}
+	conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
+	if err != nil {
+		return err
+	}
 	for i := 0; i < c.numClients; i++ {
-		tlsConf, err := getTlsConf()
-		if err != nil {
-			return err
-		}
-		conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
-		if err != nil {
-			return err
-		}
-
 		go func(id, size int) {
 			defer wg.Done()
 			stream, err := conn.OpenStreamSync(context.Background())

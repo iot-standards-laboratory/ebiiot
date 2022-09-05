@@ -3,8 +3,8 @@ import sys
 import time
 
 exp = 'simple'
-proto = 'hybrid'
-clients = '10'
+proto = 'tcp'
+clients = '60'
 messages = '100'
 msgsize = '1000'
 
@@ -28,6 +28,7 @@ if sys.argv[1] == 'run':
 elif sys.argv[1] == 'clean':
     print('clean')
 else:
+    print('start build')
     os.system('rm ../utils/pa')
     os.system('go build -o pa main.go')
     os.system('mv pa ../utils/')
