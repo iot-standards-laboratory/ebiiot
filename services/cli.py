@@ -2,9 +2,9 @@ import os
 import sys
 import time
 
-exp = 'simple'
+exp = 'http'
 proto = 'tcp'
-clients = '60'
+clients = '50'
 messages = '100'
 msgsize = '1000'
 

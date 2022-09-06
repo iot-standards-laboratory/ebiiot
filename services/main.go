@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	mock "services/mock"
+	"services/mock/httptcp"
 	"services/mock/simplehybrid"
 	"services/mock/simplequic"
 	"services/mock/simpletcp"
@@ -31,8 +32,17 @@ func init() {
 	serverSimpleGenerators[getHashValue("quic")] = simplequic.NewServer
 	clientSimpleGenerators[getHashValue("hybrid")] = simplehybrid.NewClients
 	serverSimpleGenerators[getHashValue("hybrid")] = simplehybrid.NewServer
+
+	clientHttpGenerators := map[uint32]func(string, int, int, int) mock.Entity{}
+	serverHttpGenerators := map[uint32]func() mock.Entity{}
+
+	clientHttpGenerators[getHashValue("tcp")] = httptcp.NewClients
+	serverHttpGenerators[getHashValue("tcp")] = httptcp.NewServer
+
 	clientGenerators[getHashValue("simple")] = clientSimpleGenerators
 	serverGenerators[getHashValue("simple")] = serverSimpleGenerators
+	clientGenerators[getHashValue("http")] = clientHttpGenerators
+	serverGenerators[getHashValue("http")] = serverHttpGenerators
 }
 
 func main() {
