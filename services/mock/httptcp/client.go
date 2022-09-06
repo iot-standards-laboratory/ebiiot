@@ -2,8 +2,12 @@ package httptcp
 
 import (
 	"bytes"
+	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"services/mock"
 	"services/timestamp"
@@ -36,14 +40,36 @@ func (c *Clients) Run() error {
 	for i := 0; i < c.numClients; i++ {
 		go func(id int) {
 			defer wg.Done()
+			pool, err := x509.SystemCertPool()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			dialer := &net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				// DualStack: true,
+			}
 			payload := make([]byte, c.sizeMessage)
 			for i := 0; i < c.sizeMessage; i++ {
 				payload[i] = 'b'
 			}
 
+			http.DefaultTransport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+				if addr == "mininet.node:443" {
+					addr = c.spAdr
+				}
+				return dialer.DialContext(ctx, network, addr)
+			}
+
+			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+				RootCAs:            pool,
+				InsecureSkipVerify: true,
+			}
+
 			for i := 0; i < c.numMessages; i++ {
 				start := time.Now()
-				_, err := http.Post(fmt.Sprintf("http://%s", c.spAdr), "text/plain", bytes.NewReader(payload))
+				_, err := http.Post("https://localhost:8080", "text/plain", bytes.NewReader(payload))
 				if err != nil {
 					log.Println(err)
 					return
@@ -51,7 +77,6 @@ func (c *Clients) Run() error {
 
 				fmt.Printf("client[%d] - sent %d's message\n", id, i)
 				timestamp.Cummulate(int64(time.Since(start).Milliseconds()), timestamp.TCP)
-
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}
 		}(i)

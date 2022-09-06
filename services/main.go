@@ -8,11 +8,13 @@ import (
 	"os"
 	"os/signal"
 	mock "services/mock"
+	"services/mock/httpquic"
 	"services/mock/httptcp"
 	"services/mock/simplehybrid"
 	"services/mock/simplequic"
 	"services/mock/simpletcp"
 	"services/timestamp"
+	"strings"
 	"syscall"
 )
 
@@ -38,6 +40,8 @@ func init() {
 
 	clientHttpGenerators[getHashValue("tcp")] = httptcp.NewClients
 	serverHttpGenerators[getHashValue("tcp")] = httptcp.NewServer
+	clientHttpGenerators[getHashValue("quic")] = httpquic.NewClients
+	serverHttpGenerators[getHashValue("quic")] = httpquic.NewServer
 
 	clientGenerators[getHashValue("simple")] = clientSimpleGenerators
 	serverGenerators[getHashValue("simple")] = serverSimpleGenerators
@@ -70,6 +74,9 @@ func main() {
 	clients.Run()
 
 	fmt.Println("done!!")
+	if strings.Compare(*exp, "http") == 0 {
+		timestamp.Result()
+	}
 }
 
 func runServer(exp, proto string) {
@@ -77,7 +84,9 @@ func runServer(exp, proto string) {
 	signal.Notify(interrupt, syscall.SIGTERM, os.Interrupt)
 	go func() {
 		log.Println(<-interrupt)
-		timestamp.Result()
+		if strings.Compare(exp, "simple") == 0 {
+			timestamp.Result()
+		}
 		os.Exit(0)
 	}()
 

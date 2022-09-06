@@ -18,5 +18,5 @@ func (s *Server) Run() error {
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		resp.Write([]byte("Hello world"))
 	})
-	return http.ListenAndServe(":8080", mux)
+	return http.ListenAndServeTLS(":8080", "./assets/cert.pem", "./assets/priv.key", mux)
 }
