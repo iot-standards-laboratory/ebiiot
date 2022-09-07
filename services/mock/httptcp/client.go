@@ -1,11 +1,11 @@
 package httptcp
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -50,10 +50,6 @@ func (c *Clients) Run() error {
 				KeepAlive: 30 * time.Second,
 				// DualStack: true,
 			}
-			payload := make([]byte, c.sizeMessage)
-			for i := 0; i < c.sizeMessage; i++ {
-				payload[i] = 'b'
-			}
 
 			http.DefaultTransport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 				if addr == "quic.localhost:443" {
@@ -69,14 +65,19 @@ func (c *Clients) Run() error {
 
 			for i := 0; i < c.numMessages; i++ {
 				start := time.Now()
-				rsp, err := http.Post("https://quic.localhost", "text/plain", bytes.NewReader(payload))
+				rsp, err := utils.HttpRequest(http.DefaultClient, int32(c.sizeMessage))
 				if err != nil {
 					fmt.Println(err.Error())
 					return
 				}
 
 				// fmt.Printf("client[%d] - sent %d's message\n", id, i)
-				fmt.Println(rsp.Proto)
+				body, err := ioutil.ReadAll(rsp.Body)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println(len(body))
 				timestamp.Cummulate(int64(time.Since(start).Milliseconds()), timestamp.TCP)
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}

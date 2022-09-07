@@ -10,16 +10,16 @@ if len(sys.argv) < 2 :
 if sys.argv[1] == 'run':
     # exp parameter
     exp = 'http'
-    proto = 'quic'
+    proto = 'hybrid'
     clients = 50
-    messages = 100
-    msgsize = 2000
+    messages = 1
+    msgsize = 100000
 
     # topo parameter
     delay = 100
-    queueSize = 20
-    bandwidth = 1.5
-    loss = 0.0
+    queueSize = 30
+    bandwidth = 4
+    loss = 2.0
 
     # make experimentation and topology config file at config/xp and config/topo respectively. 
     xpTmpl = template.xp_template.xp

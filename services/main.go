@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	mock "services/mock"
+	"services/mock/httphybrid"
 	"services/mock/httpquic"
 	"services/mock/httptcp"
 	"services/mock/simplehybrid"
@@ -42,6 +43,8 @@ func init() {
 	serverHttpGenerators[getHashValue("tcp")] = httptcp.NewServer
 	clientHttpGenerators[getHashValue("quic")] = httpquic.NewClients
 	serverHttpGenerators[getHashValue("quic")] = httpquic.NewServer
+	clientHttpGenerators[getHashValue("hybrid")] = httphybrid.NewClients
+	serverHttpGenerators[getHashValue("hybrid")] = httphybrid.NewServer
 
 	clientGenerators[getHashValue("simple")] = clientSimpleGenerators
 	serverGenerators[getHashValue("simple")] = serverSimpleGenerators
@@ -82,6 +85,7 @@ func main() {
 func runServer(exp, proto string) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGTERM, os.Interrupt)
+
 	go func() {
 		log.Println(<-interrupt)
 		if strings.Compare(exp, "simple") == 0 {

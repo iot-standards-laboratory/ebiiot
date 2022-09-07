@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"services/mock"
+	"services/utils"
 )
 
 type Server struct{}
@@ -14,9 +15,6 @@ func NewServer() mock.Entity {
 
 func (s *Server) Run() error {
 	fmt.Println("http tcp server start")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-		resp.Write([]byte("Hello world"))
-	})
-	return http.ListenAndServeTLS(":8080", "./assets/cert.pem", "./assets/priv.key", mux)
+	return http.ListenAndServeTLS(":8080", "./assets/cert.pem", "./assets/priv.key", utils.NewMux())
+	// return utils.NewGinMux().RunTLS(":8080", "./assets/cert.pem", "./assets/priv.key")
 }

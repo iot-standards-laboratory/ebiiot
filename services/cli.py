@@ -4,9 +4,9 @@ import time
 
 exp = 'http'
 proto = 'tcp'
-clients = '50'
-messages = '100'
-msgsize = '1000'
+clients = '100'
+messages = '1'
+msgsize = '100000'
 
 if len(sys.argv) < 2:
     print("enter runner type (run or build)")

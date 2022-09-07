@@ -11,7 +11,7 @@ type MessageI interface {
 	Payload() []byte
 	Latency() int64
 	ToBytes() []byte
-	Len() uint16
+	Len() uint32
 }
 
 type mockMessage struct {
@@ -37,8 +37,8 @@ func (mm *mockMessage) Latency() int64 {
 	return t.Sub(time.Date(t.Year(), t.Month(), t.Day(), mm.hour, mm.minute, mm.second, mm.nanosecond, t.Location())).Milliseconds()
 }
 
-func (mm *mockMessage) Len() uint16 {
-	return uint16(len(mm.payload) + 40)
+func (mm *mockMessage) Len() uint32 {
+	return uint32(len(mm.payload) + 40)
 }
 
 func (mm *mockMessage) ToBytes() []byte {

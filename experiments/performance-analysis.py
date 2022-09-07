@@ -53,7 +53,7 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         return s
 
     def getClientCmd(self):
-        s = "{}/../utils/pa -exp {} -proto {} -clients {} -messages {} -size {} {}:8443 >> client-log.txt".format(
+        s = "{}/../utils/pa -exp {} -proto {} -clients {} -messages {} -size {} {}:8080 >> client-log.txt".format(
             os.path.dirname(os.path.abspath(__file__)),
             self.EXP,
             self.PROTO,

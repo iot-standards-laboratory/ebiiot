@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"services/mock"
@@ -68,28 +69,22 @@ func (c *Clients) Run() error {
 				Transport: roundTripper,
 			}
 
-			payload := make([]byte, c.sizeMessage)
-			for i := 0; i < c.sizeMessage; i++ {
-				payload[i] = 'b'
-			}
-
 			for i := 0; i < c.numMessages; i++ {
 				start := time.Now()
-				// req, _ := http.NewRequest("GET", "https://localhost:8080", nil)
-				// rsp, err := hclient.Post("https://10.1.0.1:8080", "text/plain", bytes.NewReader(payload))
-				// if err != nil {
-				// 	fmt.Println(err)
-				// 	return
-				// }
 
-				rsp, err := hclient.Get("https://quic.localhost")
+				rsp, err := utils.HttpRequest(hclient, int32(c.sizeMessage))
 				if err != nil {
 					fmt.Println(err)
 					return
 				}
 
+				body, err := ioutil.ReadAll(rsp.Body)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Println(len(body))
 				// fmt.Printf("client[%d] - sent %d's message\n", id, i)
-				fmt.Println(rsp.Proto)
 				timestamp.Cummulate(int64(time.Since(start).Milliseconds()), timestamp.QUIC)
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}
