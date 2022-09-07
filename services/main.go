@@ -93,5 +93,5 @@ func runServer(exp, proto string) {
 	s := serverGenerators[getHashValue(exp)][getHashValue(proto)]()
 
 	// run server
-	log.Fatalln("server run:", s.Run())
+	fmt.Println("server run:", s.Run())
 }

@@ -9,11 +9,11 @@ if len(sys.argv) < 2 :
 
 if sys.argv[1] == 'run':
     # exp parameter
-    exp = 'simple'
-    proto = 'tcp'
-    clients = 10
+    exp = 'http'
+    proto = 'quic'
+    clients = 50
     messages = 100
-    msgsize = 1000
+    msgsize = 2000
 
     # topo parameter
     delay = 100
@@ -22,7 +22,7 @@ if sys.argv[1] == 'run':
     loss = 0.0
 
     # make experimentation and topology config file at config/xp and config/topo respectively. 
-    xpTmpl = template.simple_template.simpleXp
+    xpTmpl = template.xp_template.xp
     topoTmpl = template.topology_template.topo
 
     # create xpFile 
@@ -33,7 +33,7 @@ if sys.argv[1] == 'run':
             xpFile,
             'w+',
         )
-        f.write(xpTmpl.format(proto, clients, messages, msgsize))
+        f.write(xpTmpl.format(exp, proto, clients, messages, msgsize))
         f.close()
     else:
         print('file is already exist')

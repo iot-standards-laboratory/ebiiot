@@ -1,7 +1,6 @@
 package httpquic
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -57,7 +56,7 @@ func (c *Clients) Run() error {
 				},
 				QuicConfig: &quic.Config{},
 				Dial: func(ctx context.Context, addr string, tlsCfg *tls.Config, qCfg *quic.Config) (quic.EarlyConnection, error) {
-					if strings.Compare("mininet.node:443", addr) == 0 {
+					if strings.Compare("quic.localhost:443", addr) == 0 {
 						return quic.DialAddrEarly(c.spAdr, tlsCfg, qCfg)
 					}
 					return quic.DialAddrEarly(addr, tlsCfg, qCfg)
@@ -77,13 +76,20 @@ func (c *Clients) Run() error {
 			for i := 0; i < c.numMessages; i++ {
 				start := time.Now()
 				// req, _ := http.NewRequest("GET", "https://localhost:8080", nil)
-				_, err := hclient.Post("https://mininet.node", "text/plain", bytes.NewReader(payload))
+				// rsp, err := hclient.Post("https://10.1.0.1:8080", "text/plain", bytes.NewReader(payload))
+				// if err != nil {
+				// 	fmt.Println(err)
+				// 	return
+				// }
+
+				rsp, err := hclient.Get("https://quic.localhost")
 				if err != nil {
-					log.Println(err)
+					fmt.Println(err)
 					return
 				}
 
-				fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				// fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				fmt.Println(rsp.Proto)
 				timestamp.Cummulate(int64(time.Since(start).Milliseconds()), timestamp.QUIC)
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}

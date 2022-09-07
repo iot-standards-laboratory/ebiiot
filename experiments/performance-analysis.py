@@ -5,11 +5,12 @@ import threading
 
 class PerformanceAnalysisExp(RandomFileExperiment):
     # APPNAME = "qcoap-uni"
+    EXP = "simple"
     PROTO = "tcp"
     CLIENTS = "10"
     MESSAGES = "10"
     MSGSIZE = "100"
-
+    
     EXPTYPE = "performance-analysis"
     NAME = "performance-analysis"
     SERVER_LOG = "server-log.txt"
@@ -21,6 +22,7 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         super(PerformanceAnalysisExp, self).__init__(
             experiment_parameter_filename, topo, topo_config)
 
+        self.EXP = self.experiment_parameter.get("exp")
         self.PROTO = self.experiment_parameter.get("proto")
         self.CLIENTS = self.experiment_parameter.get("clients")
         self.MESSAGES = self.experiment_parameter.get("messages")
@@ -39,8 +41,9 @@ class PerformanceAnalysisExp(RandomFileExperiment):
                              PerformanceAnalysisExp.SERVER_LOG)
 
     def getServerCmd(self):
-        s = "{}/../utils/pa -server -proto {} >> server-log.txt &".format(
+        s = "{}/../utils/pa -server -exp {} -proto {} >> server-log.txt &".format(
             os.path.dirname(os.path.abspath(__file__)),
+            self.EXP,
             self.PROTO,
         )
         # s = "/home/mininet/pugit/sample/minitopo/utils/server & > {}".format(
@@ -50,8 +53,9 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         return s
 
     def getClientCmd(self):
-        s = "{}/../utils/pa -proto {} -clients {} -messages {} -size {} {}:8080 >> client-log.txt".format(
+        s = "{}/../utils/pa -exp {} -proto {} -clients {} -messages {} -size {} {}:8443 >> client-log.txt".format(
             os.path.dirname(os.path.abspath(__file__)),
+            self.EXP,
             self.PROTO,
             self.CLIENTS,
             self.MESSAGES,

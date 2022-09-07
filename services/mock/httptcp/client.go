@@ -56,7 +56,7 @@ func (c *Clients) Run() error {
 			}
 
 			http.DefaultTransport.(*http.Transport).DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
-				if addr == "mininet.node:443" {
+				if addr == "quic.localhost:443" {
 					addr = c.spAdr
 				}
 				return dialer.DialContext(ctx, network, addr)
@@ -64,18 +64,19 @@ func (c *Clients) Run() error {
 
 			http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
 				RootCAs:            pool,
-				InsecureSkipVerify: true,
+				InsecureSkipVerify: false,
 			}
 
 			for i := 0; i < c.numMessages; i++ {
 				start := time.Now()
-				_, err := http.Post("https://localhost:8080", "text/plain", bytes.NewReader(payload))
+				rsp, err := http.Post("https://quic.localhost", "text/plain", bytes.NewReader(payload))
 				if err != nil {
-					log.Println(err)
+					fmt.Println(err.Error())
 					return
 				}
 
-				fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				// fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				fmt.Println(rsp.Proto)
 				timestamp.Cummulate(int64(time.Since(start).Milliseconds()), timestamp.TCP)
 				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
 			}

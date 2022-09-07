@@ -1,2 +1,2 @@
-import template.simple_template
+import template.xp_template
 import template.topology_template
