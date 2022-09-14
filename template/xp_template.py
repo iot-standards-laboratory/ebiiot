@@ -1,5 +1,4 @@
-xp = '''
-xpType:performance-analysis
+xp = '''xpType:performance-analysis
 serverPcap:yes
 kpms:fullmesh
 kpmc:fullmesh
