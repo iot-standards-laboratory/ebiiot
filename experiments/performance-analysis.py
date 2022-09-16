@@ -8,7 +8,8 @@ class PerformanceAnalysisExp(RandomFileExperiment):
     EXP = "simple"
     PROTO = "tcp"
     CLIENTS = "10"
-    MESSAGES = "10"
+    TRIALS = "10"
+    OBJS = "5"
     MSGSIZE = "100"
     
     EXPTYPE = "performance-analysis"
@@ -25,7 +26,8 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         self.EXP = self.experiment_parameter.get("exp")
         self.PROTO = self.experiment_parameter.get("proto")
         self.CLIENTS = self.experiment_parameter.get("clients")
-        self.MESSAGES = self.experiment_parameter.get("messages")
+        self.TRIALS = self.experiment_parameter.get("trials")
+        self.OBJS = self.experiment_parameter.get("objs")
         self.MSGSIZE = self.experiment_parameter.get("msgsize")
         print("PROTO: ", self.PROTO)
 
@@ -53,12 +55,13 @@ class PerformanceAnalysisExp(RandomFileExperiment):
         return s
 
     def getClientCmd(self):
-        s = "{}/../utils/pa -exp {} -proto {} -clients {} -messages {} -size {} {}:8080 >> client-log.txt".format(
+        s = "{}/../utils/pa -exp {} -proto {} -clients {} -trials {} -objs {} -size {} {}:8080 >> client-log.txt".format(
             os.path.dirname(os.path.abspath(__file__)),
             self.EXP,
             self.PROTO,
             self.CLIENTS,
-            self.MESSAGES,
+            self.TRIALS,
+            self.OBJS,
             self.MSGSIZE,
             self.topo_config.get_server_ip(0),
         )

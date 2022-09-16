@@ -7,20 +7,20 @@ if len(sys.argv) < 2 :
     print("enter cli type (run or clean)")
     exit(-1)
 
-def experiment(numOfTrials, exp, proto, clients, messages, msgsize, delay, queueSize, bandwidth, loss):
+def experiment(numOfTrials, exp, proto, clients, trials, objs, msgsize, delay, queueSize, bandwidth, loss):
     # make experimentation and topology config file at config/xp and config/topo respectively. 
     xpTmpl = template.xp_template.xp
     topoTmpl = template.topology_template.topo
 
     # create xpFile 
-    xpFile = './config/xp/{}_{}_{}_{}_{}'.format(
-        exp, proto, clients, messages, msgsize)
+    xpFile = './config/xp/{}_{}_{}_{}_{}_{}'.format(
+        exp, proto, clients, trials, objs, msgsize)
     if not os.path.exists(xpFile):
         f = open(
             xpFile,
             'w+',
         )
-        f.write(xpTmpl.format(exp, proto, clients, messages, msgsize))
+        f.write(xpTmpl.format(exp, proto, clients, trials, objs, msgsize))
         f.close()
     else:
         print('file is already exist')
@@ -47,13 +47,16 @@ def experiment(numOfTrials, exp, proto, clients, messages, msgsize, delay, queue
                     os.system("echo {} >> netstat".format(l))
 
 if sys.argv[1] == 'run':
+    # 평균을 내기 위한 시행횟수
     numOfTrials = 5
     # exp parameter
-    exps = ['http']
-    protos = ['tcp', 'quic', 'hybrid']
-    clients = [50]
-    messages = [1]
-    msgsizes = [100000]
+    exps = ['http'] # http, simple
+    protos = ['tcp', 'quic']
+    clients = [10]
+    # 로딩 횟수
+    trials = [1]
+    objs = [1, 5]
+    msgsizes = [2000]
 
     # topo parameter
     delay = [100]
@@ -67,19 +70,20 @@ if sys.argv[1] == 'run':
     for e in exps:
         for p in protos:
             for c in clients:
-                for m in messages:
-                    for ms in msgsizes:
-                        for d in delay:
-                            for q in queueSize:
-                                for b in bandwidth:
-                                    for l in loss:
-                                        experiment(numOfTrials, e, p, c, m, ms, d, q, b, l)
-                                        
-                                        dist = './dist/{}/{}'.format(e, p)
-                                        if not os.path.exists(dist):
-                                            os.makedirs(dist)
-                                        os.system("mv atd.out {}/atd-c:{}_ms:{}_d:{}_b:{}_l:{}".format(dist, c, ms, d, b, l))
-                                        os.system("mv netstat {}/volume-c:{}_ms:{}_d:{}_b:{}_l:{}".format(dist, c, ms, d, b, l))
+                for t in trials:
+                    for o in objs:
+                        for ms in msgsizes:
+                            for d in delay:
+                                for q in queueSize:
+                                    for b in bandwidth:
+                                        for l in loss:
+                                            experiment(numOfTrials, e, p, c, t, o, ms, d, q, b, l)
+                                            
+                                            dist = './dist/{}/{}'.format(e, p)
+                                            if not os.path.exists(dist):
+                                                os.makedirs(dist)
+                                            os.system("mv atd.out {}/atd-c:{}_o:{}_ms:{}_d:{}_b:{}_l:{}".format(dist, c, o, ms, d, b, l))
+                                            os.system("mv netstat {}/volume-c:{}_o:{}_ms:{}_d:{}_b:{}_l:{}".format(dist, c, o, ms, d, b, l))
 
     
 

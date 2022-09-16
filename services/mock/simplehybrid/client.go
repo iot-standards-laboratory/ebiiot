@@ -21,11 +21,12 @@ type Clients struct {
 	spAdr          string
 	numTCPClients  int
 	numQUICClients int
-	numMessages    int
+	numTrials      int
+	numObjs        int
 	sizeMessage    int
 }
 
-func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Entity {
+func NewClients(spAdr string, numClients, numTrials, numObjs, sizeMessage int) mock.Entity {
 	numTCPClients := int(float64(numClients) * tcpRate)
 	numQUICClients := numClients - numTCPClients
 	log.Println("numTCPClients:", numTCPClients)
@@ -34,7 +35,8 @@ func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Ent
 		spAdr,
 		numTCPClients,
 		numQUICClients,
-		numMessages,
+		numTrials,
+		numObjs,
 		sizeMessage,
 	}
 }
@@ -54,7 +56,7 @@ func (c *Clients) Run() error {
 			}
 			defer conn.Close()
 
-			for i := 0; i < c.numMessages; i++ {
+			for i := 0; i < c.numTrials; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(conn, msg)
 				fmt.Printf("tcp client[%d] - sent %d's message\n", id, i)
@@ -80,7 +82,7 @@ func (c *Clients) Run() error {
 			}
 			defer stream.Close()
 
-			for i := 0; i < c.numMessages; i++ {
+			for i := 0; i < c.numTrials; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(stream, msg)
 				fmt.Printf("quic client[%d] - sent %d's message\n", id, i)
