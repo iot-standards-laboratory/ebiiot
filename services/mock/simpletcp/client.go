@@ -12,15 +12,17 @@ import (
 type Clients struct {
 	spAdr       string
 	numClients  int
-	numMessages int
+	numTrials   int
+	numObjs     int
 	sizeMessage int
 }
 
-func NewClients(spAdr string, numClients, numMessages, sizeMessage int) mock.Entity {
+func NewClients(spAdr string, numClients, numTrials, numObjs, sizeMessage int) mock.Entity {
 	return &Clients{
 		spAdr,
 		numClients,
-		numMessages,
+		numTrials,
+		numObjs,
 		sizeMessage,
 	}
 }
@@ -39,7 +41,7 @@ func (c *Clients) Run() error {
 			}
 			defer conn.Close()
 
-			for i := 0; i < c.numMessages; i++ {
+			for i := 0; i < c.numTrials; i++ {
 				msg := mock.NewMessage(id, size)
 				mock.WritePayload(conn, msg)
 				fmt.Printf("client[%d] - sent %d's message\n", id, i)

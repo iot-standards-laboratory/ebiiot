@@ -5,7 +5,8 @@ kpmc:fullmesh
 exp:{}
 proto:{}
 clients:{}
-messages:{}
+trials:{}
+objs:{}
 msgsize:{}
 rmem:300000 300000 300000
 '''

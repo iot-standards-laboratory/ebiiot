@@ -34,7 +34,7 @@ func Cummulate(sec int64, st stampType) {
 }
 
 func Result() {
-	f, err := os.Create("atd.out")
+	f, err := os.OpenFile("atd.out", os.O_APPEND|os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
 		panic(err)
 	}
