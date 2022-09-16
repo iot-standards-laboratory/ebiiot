@@ -30,11 +30,13 @@ func NewClients(spAdr string, numClients, numTrials, numObjs, sizeMessage int) m
 		sizeMessage,
 	}
 }
-func getTlsConf() (*tls.Config, error) {
-	keylog, err := os.Create("./ssl-key.log")
+
+func exchange(adr string, id, trials, objs, size int) error {
+	keylog, err := os.Create(fmt.Sprintf("key-%d.log", id))
 	if err != nil {
-		return nil, err
+		return err
 	}
+	defer keylog.Close()
 
 	tlsConf := &tls.Config{
 		InsecureSkipVerify: true,
@@ -42,7 +44,38 @@ func getTlsConf() (*tls.Config, error) {
 		NextProtos:         []string{"quic-echo-example"},
 	}
 
-	return tlsConf, nil
+	if err != nil {
+		return err
+	}
+	conn, err := quic.DialAddr(adr, tlsConf, nil)
+	if err != nil {
+		return err
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(objs)
+
+	for i := 0; i < objs; i++ {
+		go func() {
+			defer wg.Done()
+			stream, err := conn.OpenStreamSync(context.Background())
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			defer stream.Close()
+
+			for i := 0; i < trials; i++ {
+				msg := mock.NewMessage(id, size)
+				mock.WritePayload(stream, msg)
+				fmt.Printf("client[%d] - sent %d's message\n", id, i)
+				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
+			}
+		}()
+	}
+
+	wg.Wait()
+	return nil
 }
 
 func (c *Clients) Run() error {
@@ -50,30 +83,11 @@ func (c *Clients) Run() error {
 	var wg sync.WaitGroup
 	wg.Add(c.numClients)
 
-	tlsConf, err := getTlsConf()
-	if err != nil {
-		return err
-	}
-	conn, err := quic.DialAddr(c.spAdr, tlsConf, nil)
-	if err != nil {
-		return err
-	}
 	for i := 0; i < c.numClients; i++ {
-		go func(id, size int) {
+		go func(adr string, id, trials, objs, size int) {
 			defer wg.Done()
-			stream, err := conn.OpenStreamSync(context.Background())
-			if err != nil {
-				return
-			}
-			defer stream.Close()
-
-			for i := 0; i < c.numTrials; i++ {
-				msg := mock.NewMessage(id, size)
-				mock.WritePayload(stream, msg)
-				fmt.Printf("client[%d] - sent %d's message\n", id, i)
-				time.Sleep(time.Duration(utils.GetSleepTime()) * time.Millisecond)
-			}
-		}(i, c.sizeMessage)
+			exchange(c.spAdr, id, trials, objs, size)
+		}(c.spAdr, i, c.numTrials, c.numObjs, c.sizeMessage)
 	}
 
 	wg.Wait()

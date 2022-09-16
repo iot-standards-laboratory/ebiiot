@@ -41,6 +41,14 @@ func NewClients(spAdr string, numClients, numTrials, numObjs, sizeMessage int) m
 	}
 }
 
+func exchangeTCP(adr string, id, trial, objs, size int) {
+
+}
+
+func exchangeQUIC(adr string, id, trial, objs, size int) {
+
+}
+
 func (c *Clients) Run() error {
 	fmt.Println("start hybrid client")
 

@@ -2,11 +2,11 @@ import os
 import sys
 import time
 
-exp = 'http'
-proto = 'hybrid'
+exp = 'simple'
+proto = 'quic'
 clients = '10'
 trials = '5'
-objs = '5'
+objs = '20'
 msgsize = '1000'
 
 if len(sys.argv) < 2:

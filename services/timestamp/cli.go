@@ -3,6 +3,7 @@ package timestamp
 import (
 	"fmt"
 	"os"
+	"services/utils"
 	"sync"
 )
 
@@ -31,6 +32,7 @@ func Cummulate(sec int64, st stampType) {
 		quicCnt++
 	}
 
+	utils.Done()
 }
 
 func Result() {

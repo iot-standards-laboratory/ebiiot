@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	mock "services/mock"
@@ -15,6 +16,8 @@ import (
 	"services/mock/simplequic"
 	"services/mock/simpletcp"
 	"services/timestamp"
+	"services/utils"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -65,7 +68,9 @@ func main() {
 	flag.Parse()
 
 	if *isServer {
+		go runCounter()
 		runServer(*exp, *proto)
+
 		return
 	}
 
@@ -75,12 +80,24 @@ func main() {
 	}
 
 	var clients = clientGenerators[getHashValue(*exp)][getHashValue(*proto)](spAdr, *numClients, *numTrials, *numObjs, *sizeMessage)
-	clients.Run()
-
+	go clients.Run()
+	http.Get(fmt.Sprintf("http://localhost:10000/%d", (*numClients)*(*numObjs)*(*numTrials)))
 	fmt.Println("done!!")
 	if strings.Compare(*exp, "http") == 0 {
 		timestamp.Result()
 	}
+}
+
+func runCounter() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
+		count, _ := strconv.ParseInt(req.URL.Path[1:], 0, 32)
+		fmt.Println(count)
+		utils.Wait(int(count))
+		resp.WriteHeader(http.StatusOK)
+	})
+
+	log.Fatalln(http.ListenAndServe(":10000", mux))
 }
 
 func runServer(exp, proto string) {
